@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Mensajes Masivos</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            padding: 30px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin: 0 auto;
+        }
+        h2 { color: #075e54; margin-top: 0; }
+        label { font-weight: bold; display: block; margin: 15px 0 5px; }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea { resize: vertical; }
+        button {
+            background-color: #25d366;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #1ebd56; }
+        .lista-envios { margin-top: 25px; border-top: 2px solid #eee; padding-top: 15px; }
+        .item-envio {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #25d366;
+            transition: all 0.3s ease;
+        }
+        .btn-enviar {
+            background-color: #075e54;
+            padding: 6px 12px;
+            font-size: 13px;
+            width: auto;
+            margin-top: 0;
+        }
+        .btn-enviar:hover { background-color: #054c44; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚀 Envío Masivo Express (WhatsApp)</h2>
+    
+    <label for="txtMensaje">1. Escribí tu mensaje aquí:</label>
+    <textarea id="txtMensaje" rows="4" placeholder="Hola, te comparto la información del día..."></textarea>
+
+    <label for="txtNumeros">2. Pegá los números de teléfono (uno por línea):</label>
+    <textarea id="txtNumeros" rows="6" placeholder="88888888&#10;55555555&#10;77777777"></textarea>
+
+    <button onclick="procesarLista()">Generar Lista de Envíos</button>
+
+    <div class="lista-envios" id="listaEnvios" style="display: none;">
+        <h3 style="color: #075e54; margin-top: 0;">📋 Enlaces de Envío Listos</h3>
+        <div id="contenedorItems"></div>
+    </div>
+</div>
+
+<script>
+function procesarLista() {
+    const mensaje = document.getElementById('txtMensaje').value;
+    const numerosRaw = document.getElementById('txtNumeros').value;
+    const contenedor = document.getElementById('contenedorItems');
+    const seccionLista = document.getElementById('listaEnvios');
+    
+    contenedor.innerHTML = '';
+    
+    if(!mensaje.trim() || !numerosRaw.trim()){
+        alert("Por favor, llena el mensaje y agrega al menos un número.");
+        return;
+    }
+
+    const lineas = numerosRaw.split('\n');
+    let cantidadValida = 0;
+
+    lineas.forEach((linea) => {
+        let numero = linea.replace(/\s+/g, '').replace(/[^0-9]/g, '');
+        
+        if(numero.length > 0) {
+            if (numero.length === 8) {
+                numero = '505' + numero;
+            }
+            
+            cantidadValida++;
+            
+            const mensajeCodificado = encodeURIComponent(mensaje);
+            const linkWhatsapp = `https://wa.me/${numero}?text=${mensajeCodificado}`;
+            
+            // Creamos el elemento contenedor del ítem
+            const item = document.createElement('div');
+            item.className = 'item-envio';
+            
+            // Estructura interna: le pasamos 'this' a la función para saber qué botón se presionó
+            item.innerHTML = `
+                <span>📞 +${numero}</span>
+                <button class="btn-enviar" onclick="enviarYBorrar(this, '${linkWhatsapp}')">Enviar chat</button>
+            `;
+            contenedor.appendChild(item);
+        }
+    });
+
+    if(cantidadValida > 0) {
+        seccionLista.style.display = 'block';
+    } else {
+        alert("No se encontraron números válidos.");
+    }
+}
+
+function enviarYBorrar(boton, url) {
+    // 1. Abrimos el chat de WhatsApp en pestaña nueva
+    window.open(url, '_blank');
+    
+    // 2. Buscamos el contenedor padre (el div .item-envio) y lo eliminamos
+    const itemEnvio = boton.closest('.item-envio');
+    if (itemEnvio) {
+        itemEnvio.remove();
+    }
+    
+    // 3. Opcional: Si ya no quedan números en la lista, ocultamos la sección
+    const contenedor = document.getElementById('contenedorItems');
+    if (contenedor.children.length === 0) {
+        document.getElementById('listaEnvios').style.display = 'none';
+    }
+}
+</script>
+
+</body>
+</html>
