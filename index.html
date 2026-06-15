@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Mensajes Masivos</title>
+    <title>Generador de Mensajes con Asesor</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -21,13 +21,14 @@
         }
         h2 { color: #075e54; margin-top: 0; }
         label { font-weight: bold; display: block; margin: 15px 0 5px; }
-        textarea, input[type="text"] {
+        textarea, select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 14px;
+            background-color: white;
         }
         textarea { resize: vertical; }
         button {
@@ -64,18 +65,44 @@
             margin-top: 0;
         }
         .btn-enviar:hover { background-color: #054c44; }
+        .box-asesores {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚀 Envío Masivo Express (WhatsApp)</h2>
+    <h2>🚀 Envío Masivo Express con Asesor de Contacto</h2>
     
-    <label for="txtMensaje">1. Escribí tu mensaje aquí:</label>
-    <textarea id="txtMensaje" rows="4" placeholder="Hola, te comparto la información del día..."></textarea>
+    <div class="box-asesores">
+        <label for="selectAsesor" style="margin-top: 0px;">1. Selecciona el Asesor / Gestor para este envío:</label>
+        <select id="selectAsesor">
+            <option value="">-- Seleccione un asesor de la lista --</option>
+            <option value='{"nombre":"Holman","numero":"87964785"}'>Holman (📞 87964785)</option>
+            <option value='{"nombre":"Jose Brizuela","numero":"82852577"}'>Jose Brizuela (📞 82852577)</option>
+            <option value='{"nombre":"Alejandro Reyes","numero":"82728286"}'>Alejandro Reyes (📞 82728286)</option>
+            <option value='{"nombre":"Geovanny Manzanarez","numero":"85602699"}'>Geovanny Manzanarez (📞 85602699)</option>
+            <option value='{"nombre":"Miguel Mendoza","numero":"89898646"}'>Miguel Mendoza (📞 89898646)</option>
+            <option value='{"nombre":"Flabio Cuevas","numero":"87961435"}'>Flabio Cuevas (📞 87961435)</option>
+            <option value='{"nombre":"Clara Sacasa","numero":"82590967"}'>Clara Sacasa (📞 82590967)</option>
+            <option value='{"nombre":"Milton Torres","numero":"83969759"}'>Milton Torres (📞 83969759)</option>
+            <option value='{"nombre":"Jose Ortiz","numero":"87969683"}'>Jose Ortiz (📞 87969683)</option>
+            <option value='{"nombre":"Marcos Ortiz","numero":"86745172"}'>Marcos Ortiz (📞 86745172)</option>
+            <option value='{"nombre":"Rudy Leiva","numero":"77029910"}'>Rudy Leiva (📞 77029910)</option>
+            <option value='{"nombre":"Steven Nuñez","numero":"88685060"}'>Steven Nuñez (📞 88685060)</option>
+        </select>
+    </div>
 
-    <label for="txtNumeros">2. Pegá los números de teléfono (uno por línea):</label>
-    <textarea id="txtNumeros" rows="6" placeholder="88888888&#10;55555555&#10;77777777"></textarea>
+    <label for="txtMensaje">2. Escribí el mensaje base (sin los datos de contacto):</label>
+    <textarea id="txtMensaje" rows="5" placeholder="Escribe aquí el cuerpo del mensaje masivo..."></textarea>
+
+    <label for="txtNumeros">3. Pegá los números de los clientes (uno por línea):</label>
+    <textarea id="txtNumeros" rows="5" placeholder="88888888&#10;55555555"></textarea>
 
     <button onclick="procesarLista()">Generar Lista de Envíos</button>
 
@@ -87,17 +114,30 @@
 
 <script>
 function procesarLista() {
-    const mensaje = document.getElementById('txtMensaje').value;
+    const mensajeBase = document.getElementById('txtMensaje').value;
     const numerosRaw = document.getElementById('txtNumeros').value;
+    const selectorAsesor = document.getElementById('selectAsesor').value;
     const contenedor = document.getElementById('contenedorItems');
     const seccionLista = document.getElementById('listaEnvios');
     
     contenedor.innerHTML = '';
     
-    if(!mensaje.trim() || !numerosRaw.trim()){
-        alert("Por favor, llena el mensaje y agrega al menos un número.");
+    if(!mensajeBase.trim() || !numerosRaw.trim()){
+        alert("Por favor, llena el mensaje y agrega al menos un número de cliente.");
         return;
     }
+
+    if(!selectorAsesor) {
+        alert("Por favor, selecciona un asesor válido de la lista.");
+        return;
+    }
+
+    // Extraemos los datos del asesor seleccionado
+    const datosAsesor = JSON.parse(selectorAsesor);
+    
+    // Construimos el remate del mensaje con los datos del asesor
+    const textoContacto = ` Gestor de Cliente ${datosAsesor.nombre} al número: ${datosAsesor.numero}.`;
+    const mensajeCompleto = mensajeBase.trim() + ('\n') + '*' + textoContacto;
 
     const lineas = numerosRaw.split('\n');
     let cantidadValida = 0;
@@ -112,16 +152,14 @@ function procesarLista() {
             
             cantidadValida++;
             
-            const mensajeCodificado = encodeURIComponent(mensaje);
+            const mensajeCodificado = encodeURIComponent(mensajeCompleto);
             const linkWhatsapp = `https://wa.me/${numero}?text=${mensajeCodificado}`;
             
-            // Creamos el elemento contenedor del ítem
             const item = document.createElement('div');
             item.className = 'item-envio';
             
-            // Estructura interna: le pasamos 'this' a la función para saber qué botón se presionó
             item.innerHTML = `
-                <span>📞 +${numero}</span>
+                <span>📞 Enviar a: +${numero}</span>
                 <button class="btn-enviar" onclick="enviarYBorrar(this, '${linkWhatsapp}')">Enviar chat</button>
             `;
             contenedor.appendChild(item);
@@ -131,21 +169,16 @@ function procesarLista() {
     if(cantidadValida > 0) {
         seccionLista.style.display = 'block';
     } else {
-        alert("No se encontraron números válidos.");
+        alert("No se encontraron números de clientes válidos.");
     }
 }
 
 function enviarYBorrar(boton, url) {
-    // 1. Abrimos el chat de WhatsApp en pestaña nueva
     window.open(url, '_blank');
-    
-    // 2. Buscamos el contenedor padre (el div .item-envio) y lo eliminamos
     const itemEnvio = boton.closest('.item-envio');
     if (itemEnvio) {
         itemEnvio.remove();
     }
-    
-    // 3. Opcional: Si ya no quedan números en la lista, ocultamos la sección
     const contenedor = document.getElementById('contenedorItems');
     if (contenedor.children.length === 0) {
         document.getElementById('listaEnvios').style.display = 'none';
